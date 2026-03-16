@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do List App</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body { font-family: Arial, sans-serif; padding: 1rem; }
+        .todo-container { max-width: 500px; margin: auto; }
+        .todo-input { width: calc(100% - 110px); padding: 0.6rem; }
+        .todo-add { padding: 0.6rem 1rem; margin-left: 0.4rem; }
+        .todo-list li { display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #ddd; }
+        .todo-list li.completed span { text-decoration: line-through; color: #888; }
+        .todo-actions button { margin-left: 0.35rem; }
+    </style>
+</head>
+<body>
+    <div class="todo-container">
+        <h1>To-Do List App</h1>
+        <div>
+            <input id="taskInput" class="todo-input" placeholder="Add new task..." />
+            <button id="addBtn" class="todo-add">Add</button>
+        </div>
+        <ul id="taskList" class="todo-list"></ul>
+        <p id="status" aria-live="polite"></p>
+        <p><a href="projects.html">Back to Projects</a></p>
+    </div>
+
+    <script>
+        const taskInput = document.getElementById('taskInput');
+        const addBtn = document.getElementById('addBtn');
+        const taskList = document.getElementById('taskList');
+        const status = document.getElementById('status');
+
+        const STORAGE_KEY = 'todoAppTasks';
+
+        let tasks = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+
+        function saveTasks() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+        }
+
+        function renderTasks() {
+            taskList.innerHTML = '';
+            if (!tasks.length) {
+                status.textContent = 'No tasks yet. Add one!';
+                return;
+            }
+            status.textContent = `${tasks.length} task(s)`;
+            tasks.forEach((task, index) => {
+                const li = document.createElement('li');
+                li.className = task.done ? 'completed' : '';
+
+                const span = document.createElement('span');
+                span.textContent = task.text;
+                span.style.cursor = 'pointer';
+                span.title = 'Click to toggle complete';
+                span.addEventListener('click', () => {
+                    tasks[index].done = !tasks[index].done;
+                    saveTasks();
+                    renderTasks();
+                });
+
+                const actions = document.createElement('div');
+                actions.className = 'todo-actions';
+
+                const edit = document.createElement('button');
+                edit.textContent = 'Edit';
+                edit.addEventListener('click', () => {
+                    const newTask = prompt('Edit task', task.text);
+                    if (newTask && newTask.trim()) {
+                        tasks[index].text = newTask.trim();
+                        saveTasks();
+                        renderTasks();
+                    }
+                });
+
+                const remove = document.createElement('button');
+                remove.textContent = 'Delete';
+                remove.addEventListener('click', () => {
+                    tasks.splice(index, 1);
+                    saveTasks();
+                    renderTasks();
+                });
+
+                actions.appendChild(edit);
+                actions.appendChild(remove);
+
+                li.appendChild(span);
+                li.appendChild(actions);
+                taskList.appendChild(li);
+            });
+        }
+
+        function addTask() {
+            const text = taskInput.value.trim();
+            if (!text) return;
+            tasks.push({ text, done: false });
+            taskInput.value = '';
+            saveTasks();
+            renderTasks();
+        }
+
+        addBtn.addEventListener('click', addTask);
+        taskInput.addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') addTask();
+        });
+
+        renderTasks();
+    </script>
+</body>
+</html>
